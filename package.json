@@ -1,0 +1,18 @@
+{
+  "name": "us-stocks-watchlist",
+  "version": "1.0.0",
+  "private": true,
+  "description": "One-page Nuxt 2 app แสดงรายการหุ้น US กรองตามหมวด พลังงาน / AI / GPU พร้อมราคาเรียลไทม์จาก Finnhub",
+  "scripts": {
+    "dev": "cross-env NODE_OPTIONS=--openssl-legacy-provider nuxt",
+    "build": "cross-env NODE_OPTIONS=--openssl-legacy-provider nuxt build",
+    "start": "cross-env NODE_OPTIONS=--openssl-legacy-provider nuxt start",
+    "generate": "cross-env NODE_OPTIONS=--openssl-legacy-provider nuxt generate"
+  },
+  "dependencies": {
+    "nuxt": "^2.17.3"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3"
+  }
+}
