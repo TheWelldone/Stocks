@@ -64,7 +64,10 @@
 
       <!-- เมตา -->
       <div class="meta">
-        <span>แสดง {{ filtered.length }} จาก {{ rows.length }} หุ้น</span>
+        <span>
+          แสดง {{ filtered.length }} จาก {{ rows.length }} หุ้น
+          <span v-if="marketLabel" class="mkt" :class="marketLabel.c">{{ marketLabel.t }}</span>
+        </span>
         <span v-if="updatedLabel" class="updated">อัปเดตล่าสุด {{ updatedLabel }}</span>
       </div>
 
@@ -79,6 +82,7 @@
               <th class="num">ราคา (USD)</th>
               <th class="num">เปลี่ยนแปลง</th>
               <th class="num">% เปลี่ยนแปลง</th>
+              <th class="num col-ext">นอกเวลา</th>
               <th class="num col-vol">มูลค่าซื้อขาย</th>
               <th class="num col-buy">ราคาซื้อ <span class="hd-pct">−{{ buyPct || 0 }}%</span></th>
               <th class="num col-sell">ราคาขาย <span class="hd-pct">+{{ sellPct || 0 }}%</span></th>
@@ -116,6 +120,19 @@
                 <span class="pct-pill" :class="dirClass(s.quote && s.quote.percent)">
                   {{ fmtPercent(s.quote && s.quote.percent) }}
                 </span>
+              </td>
+              <td class="num col-ext ext">
+                <template
+                  v-if="s.quote && s.quote.extPrice != null && s.quote.session !== 'regular'"
+                >
+                  <span class="ext-price">{{ fmtMoney(s.quote.extPrice) }}</span>
+                  <span
+                    v-if="s.quote.extPercent != null"
+                    class="ext-pct"
+                    :class="dirClass(s.quote.extPercent)"
+                  >{{ fmtPercent(s.quote.extPercent) }}</span>
+                </template>
+                <template v-else>—</template>
               </td>
               <td class="num col-vol vol">{{ fmtTurnover(s.quote) }}</td>
               <td class="num col-buy buy">{{ fmtMoney(buyPrice(s.quote)) }}</td>
@@ -300,6 +317,7 @@ export default {
       loading: false,
       errorMsg: '',
       updatedAt: null,
+      marketSession: null, // ช่วงตลาดปัจจุบัน: pre | regular | post | closed
       // --- เลือกหุ้น + popup กราฟ ---
       selectedSymbol: null,
       showChart: false,
@@ -338,6 +356,15 @@ export default {
       if (!this.updatedAt) return ''
       const d = new Date(this.updatedAt)
       return d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    },
+    marketLabel() {
+      const map = {
+        pre: { t: '🌅 ก่อนเปิด (Pre-market)', c: 'pre' },
+        regular: { t: '🟢 ตลาดเปิด', c: 'open' },
+        post: { t: '🌆 หลังปิด (After-hours)', c: 'post' },
+        closed: { t: '🔴 ตลาดปิด', c: 'closed' }
+      }
+      return this.marketSession ? map[this.marketSession] : null
     },
     rangeLabel() {
       const r = this.ranges.find((x) => x.id === this.chartRange)
@@ -570,6 +597,7 @@ export default {
           this.errorMsg = 'ดึงข้อมูลราคาไม่สำเร็จ: ' + (json.message || 'unknown error')
         }
         this.updatedAt = json.updatedAt || null
+        this.marketSession = json.marketSession || null
       } catch (e) {
         this.errorMsg = 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้: ' + (e.message || e)
       } finally {
@@ -817,7 +845,7 @@ export default {
   border-bottom: 1px solid var(--border);
 }
 .hero-inner {
-  max-width: 1340px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 22px 20px;
   display: flex;
@@ -878,7 +906,7 @@ export default {
 /* Container */
 .container {
   width: 100%;
-  max-width: 1340px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 20px;
   flex: 1;
@@ -1029,7 +1057,7 @@ export default {
 }
 .stock-table {
   width: 100%;
-  min-width: 1180px;
+  min-width: 1300px;
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -1195,6 +1223,51 @@ export default {
 }
 .col-profit {
   border-left: 1px solid rgba(22, 199, 132, 0.18);
+}
+
+/* ป้ายสถานะตลาด */
+.mkt {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.mkt.open {
+  color: var(--up);
+  background: rgba(22, 199, 132, 0.12);
+}
+.mkt.pre {
+  color: #fbbf24;
+  background: rgba(234, 179, 8, 0.12);
+}
+.mkt.post {
+  color: #c084fc;
+  background: rgba(168, 85, 247, 0.16);
+}
+.mkt.closed {
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* คอลัมน์ราคานอกเวลา (pre-market / after-hours) */
+.col-ext {
+  min-width: 116px;
+}
+.ext .ext-price {
+  font-weight: 600;
+}
+.ext .ext-pct {
+  display: block;
+  font-size: 11px;
+  margin-top: 1px;
+}
+.ext .ext-pct.up {
+  color: var(--up);
+}
+.ext .ext-pct.down {
+  color: var(--down);
 }
 
 /* เลือกแถวได้ */
